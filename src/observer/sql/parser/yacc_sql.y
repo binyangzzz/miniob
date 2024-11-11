@@ -111,9 +111,11 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
         LE
         GE
         NE
+        STAR
 
 /** union 中定义各种数据类型，真实生成的代码也是union类型，所以不能有非POD类型的数据 **/
 %union {
+  std::vector<RelAttrSqlNode> * attr_list;
   ParsedSqlNode *                            sql_node;
   ConditionSqlNode *                         condition;
   Value *                                    value;
@@ -139,6 +141,7 @@ UnboundAggregateExpr *create_aggregate_expression(const char *aggregate_name,
 //非终结符
 
 /** type 定义了各种解析后的结果输出的是什么类型。类型对应了 union 中的定义的成员变量名称 **/
+%type <attr_list>           attr_list
 %type <number>              type
 %type <condition>           condition
 %type <value>               value
@@ -527,10 +530,26 @@ expression:
       $$->set_name(token_name(sql_string, &@$));
       delete $1;
     }
-    | '*' {
-      $$ = new StarExpr();
+    | STAR attr_list {
+        for (auto &attr : *$2) {
+            selects_append_attribute(&CONTEXT->ssql->sstr.selection, &attr);
+        }
+        delete $2;
     }
     // your code here
+    ;
+
+attr_list:
+    rel_attr {
+        $$ = new std::vector<RelAttrSqlNode>();
+        $$->push_back(*$1);
+        delete $1;
+    }
+    | rel_attr ',' attr_list {
+        $$ = $3;
+        $$->push_back(*$1);
+        delete $1;
+    }
     ;
 
 rel_attr:
