@@ -193,8 +193,16 @@ commands: command_wrapper opt_semicolon  //commands or sqls. parser starts here.
     std::unique_ptr<ParsedSqlNode> sql_node = std::unique_ptr<ParsedSqlNode>($1);
     sql_result->add_sql_node(std::move(sql_node));
   }
+  | show_index
   ;
 
+show_index:
+  SHOW INDEX FROM ID SEMICOLON
+  {
+    CONTEXT->ssql->flag = SCF_SHOW_INDEX; // "show_index"
+    show_index_init(&CONTEXT->ssql->sstr.show_index, $4);
+  }
+  ;
 command_wrapper:
     calc_stmt
   | select_stmt
@@ -729,3 +737,4 @@ int sql_parse(const char *s, ParsedSqlResult *sql_result) {
   yylex_destroy(scanner);
   return result;
 }
+

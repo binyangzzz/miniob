@@ -321,3 +321,15 @@ public:
 private:
   std::vector<std::unique_ptr<ParsedSqlNode>> sql_nodes_;  ///< 这里记录SQL命令。虽然看起来支持多个，但是当前仅处理一个
 };
+
+// struct of show_index
+typedef struct{
+ char *relation_name; // Relation name
+} ShowIndex;
+
+union Queries {
+ ShowIndex show_index;
+}
+enum SqlCommandFlag {
+ SCF_SHOW_INDEX
+}
